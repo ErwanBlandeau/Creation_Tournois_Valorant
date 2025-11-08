@@ -28,7 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 
 		try{
-			const resp = await fetch(url);
+			const resp = await fetch(url
+                ,{
+                    headers: {
+                        'TRN-Api-Key': '63a3ac9a-3730-4ed0-8fbb-f986e5176617',
+                    }
+                }
+            );
 			if(!resp.ok){
 				const txt = await resp.text().catch(()=>null);
 				showError('Erreur proxy: ' + resp.status + ' ' + (txt||''));
