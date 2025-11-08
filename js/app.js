@@ -1,197 +1,83 @@
-// Script principal pour créer des équipes équilibrées.
-// Mode d'emploi :
-// - Entrez une liste de joueurs dans le textarea (une par ligne).
-// - Optionnel: après le nom, ajoutez |score (par exemple: Joueur#1234|75) ou |rankName (ex: Joueur#1234|Gold).
-// - Cochez "Utiliser Tracker.gg" et fournissez votre clé si vous voulez que le script tente de récupérer le rang réel.
+document.addEventListener('DOMContentLoaded', () => {
+	const form = document.getElementById('profile-form');
+	const input = document.getElementById('player-tag');
+	const out = document.getElementById('stats-output');
 
-const playersEl = document.getElementById('players');
-const numTeamsEl = document.getElementById('numTeams');
-const apiKeyEl = document.getElementById('apiKey');
-const useTrackerEl = document.getElementById('useTracker');
-const createBtn = document.getElementById('createBtn');
-const clearBtn = document.getElementById('clearBtn');
-const resultsEl = document.getElementById('results');
+	function setOutput(html){ out.innerHTML = html; }
 
-// Buttons for improved UI (insert example / clear list)
-const insertSampleBtn = document.getElementById('insertSampleBtn');
-const clearPlayersListBtn = document.getElementById('clearPlayersListBtn');
+	function showError(msg){ setOutput(`<div class="error">${escapeHtml(msg)}</div>`); }
 
-createBtn.addEventListener('click', async () => {
-  resultsEl.innerHTML = '';
-  const raw = playersEl.value.trim();
-  if(!raw){ resultsEl.innerHTML = '<p class="small">Aucun joueur détecté.</p>'; return }
-  const lines = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-  const numTeams = Math.max(2, parseInt(numTeamsEl.value)||2);
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const raw = (input.value||'').trim();
+		if(!raw){ showError('Veuillez entrer un tag au format Nom#1234'); return; }
 
-  // Parse players (name and optional score/rank)
-  let parsed = lines.map(line=>{
-    const parts = line.split('|').map(p=>p.trim());
-    return {raw:parts[0], extra:parts[1]||null};
-  });
+		setOutput('<div class="small">Chargement…</div>');
 
-  // Convert extras to numeric score when possible; default score = 50
-  const apiKey = apiKeyEl.value.trim();
-  const useTracker = useTrackerEl.checked && apiKey;
+		// Determine whether user provided full tag or parts
+		// If there's a '#', use it as the tag param. Otherwise try to use as player only (not ideal).
+		let url = 'https://public-api.tracker.gg/v2/valorant/standard/profile/riot/';
+		if(raw.includes('#')){
+			url += 'tag=' + encodeURIComponent(raw);
+		} else {
+			// treat as player name without tag
+			url += 'player=' + encodeURIComponent(raw);
+		}
 
-  // Map common rank names to numeric score (0-100)
-  const rankMap = {
-    'iron':10,'bronze':25,'silver':35,'gold':50,'platinum':60,'diamond':75,'ascendant':82,'immortal':92,'radiant':100
-  };
-
-  async function fetchScoreFromTracker(tag){
-    // Try a local proxy first (to avoid CORS issues). If that fails, fall back to the public Tracker.gg API
-    // Local proxy endpoint: http://localhost:3000/api/valorant/profile?tag={encodedTag}
-    // Public endpoint: https://public-api.tracker.gg/v2/valorant/standard/profile/riot/{encodedTag}
-    try{
-      let res = null;
-      try{
-        const localUrl = `http://localhost:3000/api/valorant/profile?nom=${tag}`;
-        res = await fetch(localUrl);
-        // If proxy is not running, this may throw or return non-ok
-        if(!res.ok) throw new Error('Local proxy returned ' + res.status);
-      } catch(localErr){
-        // Fallback to public API if API key provided
-        if(apiKey){
-          const publicUrl = `https://public-api.tracker.gg/v2/valorant/standard/profile/riot/${encoded}`;
-          res = await fetch(publicUrl, {headers: {'TRN-Api-Key': apiKey}});
-          if(!res.ok) throw new Error('Public API returned ' + res.status);
-        } else {
-          console.warn('Local proxy not available and no API key provided');
-          return null;
-        }
-      }
-      const data = await res.json();
-      // Try to extract a rank string or numeric rating
-      // Several possible places: data.data.segments[0].stats.rank or metadata
-      if(data && data.data && Array.isArray(data.data.segments)){
-        for(const seg of data.data.segments){
-          // Attempt known fields
-          if(seg && seg.stats){
-            // try rating or rank
-            const keys = Object.keys(seg.stats);
-            for(const k of keys){
-              const name = k.toLowerCase();
-              if(name.includes('rank') || name.includes('rating') || name.includes('mmr')){
-                const val = seg.stats[k];
-                // val may be object with "displayValue" or numeric value
-                if(typeof val === 'object'){
-                  const dv = (val.displayValue || '').toString();
-                  const num = parseInt(dv.replace(/[^0-9]/g,''));
-                  if(!isNaN(num)) return Math.min(100, Math.max(0, num));
-                  // try mapping by name
-                  const lname = dv.toLowerCase();
-                  for(const rk in rankMap) if(lname.includes(rk)) return rankMap[rk];
-                } else if(typeof val === 'number'){
-                  return Math.min(100, Math.max(0, Math.round(val)));
+		try{
+			const resp = await fetch(url
+                ,
+                {
+                    headers: {
+                        'TRN-Api-Key': '5b42ea3c-b339-45ad-808c-71f8e6422de9'
+                    }
                 }
-              }
-            }
-          }
-          // fallback to metadata rankName
-          if(seg && seg.metadata){
-            const meta = seg.metadata;
-            if(meta && meta.rankName){
-              const rn = meta.rankName.toLowerCase();
-              for(const rk in rankMap) if(rn.includes(rk)) return rankMap[rk];
-            }
-          }
-        }
-      }
-      return null; // not found
-    }catch(e){
-      console.warn('Tracker fetch failed for', tag, e.message);
-      return null;
-    }
-  }
+            );
+			if(!resp.ok){
+				const txt = await resp.text().catch(()=>null);
+				showError('Erreur proxy: ' + resp.status + ' ' + (txt||''));
+				return;
+			}
+			const data = await resp.json();
+			if(data && data.error){
+				showError('API error: ' + (data.error.message || JSON.stringify(data)));
+				return;
+			}
 
-  // Build array with numeric scores
-  const players = [];
-  for(const p of parsed){
-    let score = null;
-    // If extra numeric
-    if(p.extra){
-      const n = parseInt(p.extra);
-      if(!isNaN(n)) score = Math.min(100, Math.max(0, n));
-      else {
-        // try map rank name
-        const lk = p.extra.toLowerCase();
-        for(const rk in rankMap) if(lk.includes(rk)) { score = rankMap[rk]; break }
-      }
-    }
-    players.push({name:p.raw, score});
-  }
+			// Render useful info
+			const parts = [];
+			parts.push(`<div class="small">Tag: <strong>${escapeHtml(data.tag || raw)}</strong></div>`);
+			if(data.cached) parts.push('<div class="small">(resultat en cache)</div>');
+			parts.push(`<div class="small">Platform: ${escapeHtml(data.platform||'riot')}</div>`);
+			parts.push(`<div class="small">Rank: <strong>${escapeHtml(data.rankName||'N/A')}</strong></div>`);
+			parts.push(`<div class="small">Score: <strong>${data.score!=null?escapeHtml(''+data.score):'N/A'}</strong></div>`);
 
-  // If using tracker, fetch missing scores
-  if(useTracker){
-    resultsEl.innerHTML = '<p class="small">Récupération des rangs via Tracker.gg…</p>';
-    // Fetch in sequence to avoid rate-limits; for many players, consider batching with delays.
-    for(const pl of players){
-      if(pl.score == null){
-        // try tag variants: if contains '#', use as-is; otherwise assume full tag provided by the user
-        const tag = pl.name;
-        const s = await fetchScoreFromTracker(tag);
-        if(s != null) pl.score = s;
-        else pl.score = 50; // default fallback
-      }
-    }
-  } else {
-    // assign default score 50 when missing
-    for(const pl of players) if(pl.score==null) pl.score = 50;
-  }
+			// Optionally show a compact raw preview
+			if(data.raw){
+				try{
+					const rawPretty = JSON.stringify(data.raw, null, 2).slice(0, 2000);
+					parts.push('<details><summary>Détails bruts (preview)</summary><pre class="small">' + escapeHtml(rawPretty) + (JSON.stringify(data.raw).length>2000? '\n...truncated':'' )+ '</pre></details>');
+				}catch(e){/* ignore */}
+			}
 
-  // Now form teams by greedy balancing (assign next highest player to team with lowest total)
-  players.sort((a,b)=>b.score - a.score);
-  const teams = Array.from({length:numTeams}, ()=>({players:[], total:0}));
-  for(const pl of players){
-    // find team with smallest total
-    teams.sort((a,b)=>a.total - b.total);
-    teams[0].players.push(pl);
-    teams[0].total += pl.score;
-  }
+			parts.push(`<div style="margin-top:8px"><button id="copyBtn">Copier résultat</button></div>`);
 
-  // Render results
-  resultsEl.innerHTML = '';
-  teams.forEach((t,i)=>{
-    const div = document.createElement('div');
-    div.className = 'team';
-    const title = document.createElement('h3');
-    title.textContent = `Équipe ${i+1} — total ${t.total}`;
-    div.appendChild(title);
-    t.players.forEach(p=>{
-      const pdiv = document.createElement('div');
-      pdiv.className = 'player';
-      pdiv.innerHTML = `<span>${escapeHtml(p.name)}</span><span class="small">${p.score}</span>`;
-      div.appendChild(pdiv);
-    });
-    resultsEl.appendChild(div);
-  });
+			setOutput(parts.join('\n'));
+
+			const copyBtn = document.getElementById('copyBtn');
+			if(copyBtn){
+				copyBtn.addEventListener('click', ()=>{
+					const text = `Tag: ${data.tag || raw}\nRank: ${data.rankName || 'N/A'}\nScore: ${data.score != null ? data.score : 'N/A'}`;
+					navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : alert(text);
+				});
+			}
+
+		}catch(err){
+			showError('Erreur: ' + (err.message || String(err)));
+		}
+	});
 
 });
 
-clearBtn.addEventListener('click', ()=>{ playersEl.value = ''; resultsEl.innerHTML = ''; });
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
 
-// small helper to escape HTML
-function escapeHtml(s){ return s.replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c] || c); }
-
-// Insert a sample player list to help users
-if(insertSampleBtn){
-  insertSampleBtn.addEventListener('click', ()=>{
-    playersEl.value = [
-      'Radiant1#0001|Radiant',
-      'Immortal2#0002|Immortal',
-      'Alice#1234|Gold',
-      'Bob#4321|Silver',
-      'PlayerNoRank#5555',
-      'Sub#0006|60'
-    ].join('\n');
-    resultsEl.innerHTML = '';
-  });
-}
-
-// Clear only the players textarea (keeps other settings)
-if(clearPlayersListBtn){
-  clearPlayersListBtn.addEventListener('click', ()=>{
-    playersEl.value = '';
-    resultsEl.innerHTML = '';
-  });
-}
