@@ -43,11 +43,9 @@ createBtn.addEventListener('click', async () => {
     // Local proxy endpoint: http://localhost:3000/api/valorant/profile?tag={encodedTag}
     // Public endpoint: https://public-api.tracker.gg/v2/valorant/standard/profile/riot/{encodedTag}
     try{
-      const encoded = encodeURIComponent(tag);
-      // Try local proxy
       let res = null;
       try{
-        const localUrl = `http://localhost:3000/api/valorant/profile?tag=${encoded}`;
+        const localUrl = `http://localhost:3000/api/valorant/profile?nom=${tag}`;
         res = await fetch(localUrl);
         // If proxy is not running, this may throw or return non-ok
         if(!res.ok) throw new Error('Local proxy returned ' + res.status);
