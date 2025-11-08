@@ -33,6 +33,35 @@ Utiliser le proxy local (recommandé pour contourner CORS)
 - Le proxy écoute par défaut sur `http://localhost:3000` et expose `/api/valorant/profile?tag={tag}`.
 - Le frontend essaiera automatiquement d'appeler d'abord `http://localhost:3000` (évite les erreurs CORS). Si le proxy n'est pas disponible mais que vous avez fourni une clé dans l'UI, il tentera l'API publique.
 
+Déploiement sur Vercel (recommandé)
+---------------------------------
+
+Pour éviter les problèmes CORS en production et protéger votre clé API, déployez la fonction serverless incluse sous Vercel.
+
+1. Créez un projet sur Vercel et connectez votre dépôt Git.
+2. Dans les Settings → Environment Variables, ajoutez :
+
+	- Key: TRN_API_KEY
+	- Value: <votre_tracker_gg_api_key>
+
+3. Poussez vos changements et déployez. Vercel publiera automatiquement la route serverless disponible sous `/api/valorant/profile`.
+
+4. Le frontend appelle ensuite `/api/valorant/profile?tag=Nom%231234` (ou `?player=Nom&tag=1234`) — aucune clé n'est exposée côté client.
+
+Tester localement avec Vercel CLI
+---------------------------------
+
+Vous pouvez tester la fonction localement avec la CLI Vercel :
+
+```powershell
+npm i -g vercel
+copy .env.example .env
+# remplir .env avec TRN_API_KEY=...
+vercel dev
+```
+
+`vercel dev` montera l'API serverless sous `http://localhost:3000` (ou autre port) et chargera les variables d'environnement depuis `.env`.
+
 Notes techniques et limites
 - Le script tente d'appeler l'endpoint public `https://public-api.tracker.gg/v2/valorant/standard/profile/riot/{tag}` et utilise l'en-tête `TRN-Api-Key`. La structure des réponses peut varier et le parsing est conservateur. Si la récupération échoue, on retombe sur une valeur par défaut (50).
 - Pour éviter les problèmes de CORS ou de quota, vous pouvez exécuter un petit proxy côté serveur ou limiter la fréquence des requêtes.
