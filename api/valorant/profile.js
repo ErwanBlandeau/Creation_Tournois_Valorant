@@ -51,8 +51,8 @@ module.exports = async (req, res) => {
   try{
     const encoded = encodeURIComponent(composed);
     // Use v2 endpoint by default; change to /api/v1/... if you prefer v1
-    const url = `https://public-api.tracker.gg/v2/valorant/standard/profile/${platform}/${encoded}`;
-
+    const url = `https://public-api.tracker.gg/v2/valorant/standard/profile/riot/${encoded}`;
+    console.log('Fetching URL:', url);
     const headers = {
         'TRN-Api-Key': '5b42ea3c-b339-45ad-808c-71f8e6422de9',
         'Accept': 'application/json'
