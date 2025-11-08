@@ -15,18 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
 		setOutput('<div class="small">Chargement…</div>');
         PLAYER_NAME = raw.split('#')[0];
         console.log(PLAYER_NAME);
-		// Determine whether user provided full tag or parts
-		// If there's a '#', use it as the tag param. Otherwise try to use as player only (not ideal).
-		let url = `https://public-api.tracker.gg/v2/valorant/standard/profile/riot/${PLAYER_NAME}`;
+		// Use a local proxy so the API key isn't exposed and CORS is handled server-side.
+		// The proxy expects a `tag` query parameter with the full Riot tag like Name#1234.
+		let url = `/api/valorant/profile?tag=${encodeURIComponent(raw)}`;
 
 		try{
-			const resp = await fetch(url
-                ,{
-                    headers: {
-                        'TRN-Api-Key': '63a3ac9a-3730-4ed0-8fbb-f986e5176617',
-                    }
-                }
-            );
+			const resp = await fetch(url);
 			if(!resp.ok){
 				const txt = await resp.text().catch(()=>null);
 				showError('Erreur proxy: ' + resp.status + ' ' + (txt||''));
