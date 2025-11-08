@@ -14,18 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		setOutput('<div class="small">Chargement…</div>');
         PLAYER_NAME = raw.split('#')[0];
-        TAG = raw.split('#')[1] ;
         console.log(PLAYER_NAME);
-        console.log(TAG);
 		// Determine whether user provided full tag or parts
 		// If there's a '#', use it as the tag param. Otherwise try to use as player only (not ideal).
-		let url = `https://public-api.tracker.gg/v2/valorant/standard/profile/riot/${PLAYER_NAME}%23${TAG}`;
-		if(raw.includes('#')){
-			url += 'tag=' + encodeURIComponent(raw);
-		} else {
-			// treat as player name without tag
-			url += 'player=' + encodeURIComponent(raw);
-		}
+		let url = `https://public-api.tracker.gg/v2/valorant/standard/profile/riot/${PLAYER_NAME}`;
 
 		try{
 			const resp = await fetch(url
