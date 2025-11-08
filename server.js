@@ -19,7 +19,7 @@ app.get('/api/valorant/profile', async (req, res) => {
 
   const identifier = tag ? tag : player;
   const encoded = encodeURIComponent(identifier);
-  const url = `https://public-api.tracker.gg/v1/valorant/standard/profile/riot/${encoded}`;
+  const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
 
   try{
     const r = await fetch(url, {
