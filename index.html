@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Créateur d'équipes - Tournois Valorant</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Créateur d'équipes - Tournois Valorant</h1>
+
+    <section class="controls">
+      <label for="players">Liste des joueurs (une par ligne). Optionnel : ajoutez <code>|score</code> (0-100) ou <code>|rankName</code> après le nom — ex. <strong>Joueur#1234|75</strong> ou <strong>Alice#0000|Gold</strong>.</label>
+      <textarea id="players" aria-describedby="playersHelp" placeholder="Joueur1#tag\nJoueur2#tag|Gold\nJoueur3#tag|70" rows="8"></textarea>
+
+      <div id="playersHelp" class="help-row">
+        <p class="small">Exemples acceptés : <code>Nom#tag</code>, <code>Nom#tag|75</code>, <code>Nom#tag|Gold</code>. Si vous utilisez Tracker.gg, laissez le score vide pour récupérer automatiquement le rang (si clé fournie).</p>
+        <div class="help-actions">
+          <button type="button" id="insertSampleBtn" class="secondary">Insérer un exemple</button>
+          <button type="button" id="clearPlayersListBtn" class="secondary">Effacer la liste</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="numTeams">Nombre d'équipes</label>
+        <input id="numTeams" type="number" min="2" value="2">
+      </div>
+
+      <div class="row">
+        <label for="apiKey">Tracker.gg API Key (facultatif)</label>
+        <input id="apiKey" type="text" placeholder="Votre clé TRN-Api-Key (laisser vide pour mode manuel)">
+      </div>
+
+      <div class="row">
+        <label>
+          <input id="useTracker" type="checkbox"> Utiliser Tracker.gg pour récupérer les rangs (si clé fournie)
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="createBtn">Créer les équipes</button>
+        <button id="clearBtn" class="secondary">Effacer</button>
+      </div>
+    </section>
+
+    <section id="results" class="results">
+      <!-- résultats insérés ici -->
+    </section>
+
+    <footer>
+      <small>Demo — Entrez des joueurs et créez des équipes équilibrées. Utilisez une API Key Tracker.gg pour des scores basés sur le rang. Voir README.</small>
+    </footer>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
