@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try{
       const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
       const headers = {
-        "TRN-Api-Key": '63a3ac9a-3730-4ed0-8fbb-f986e5176617' // Replace with your actual API key
+        "TRN-Api-Key": '63a3ac9a-3730-4ed0-8fbb-f986e5176617'
       };
 
       const response = await fetch(url, { headers });
@@ -50,4 +50,89 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+// React-based static front-end. This file uses the UMD React/ReactDOM provided in index.html.
+(() => {
+  const e = React.createElement;
+
+  // Configuration: use a proxy path to avoid CORS issues. If you have no proxy,
+  // set PROXY_BASE to null to attempt a direct call (may be blocked by CORS).
+  const PROXY_BASE = '/api/valorant/profile?tag='; // recommended
+  const DIRECT_BASE = 'https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/';
+
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+
+  function ProfileView({data}){
+    if(!data) return null;
+    // Minimal rendering; you can expand this depending on the API shape
+    return e('div', {className: 'profile'},
+      e('h2', null, data.platformInfo?.platformUserHandle || 'Profil'),
+      e('pre', null, JSON.stringify(data, null, 2))
+    );
+  }
+
+  function App(){
+    const [tag, setTag] = React.useState('');
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState('');
+    const [profile, setProfile] = React.useState(null);
+
+    async function submit(e){
+      e && e.preventDefault();
+      setError('');
+      setProfile(null);
+      const raw = (tag||'').trim();
+      if(!raw){ setError('Veuillez entrer un tag au format Nom#1234'); return; }
+      setLoading(true);
+      const encoded = encodeURIComponent(raw);
+
+      // prefer proxy to avoid CORS; if no proxy is available, try direct (may fail)
+      const url = (PROXY_BASE ? PROXY_BASE + encoded : DIRECT_BASE + encoded);
+
+      try{
+        const headers = {};
+        // If you call the API directly and need a key client-side (not recommended),
+        // you could set headers['TRN-Api-Key'] = window.API_KEY || 'your-key';
+
+        const resp = await fetch(url, { headers, credentials: 'omit' });
+        if(!resp.ok){
+          // Try to surface CORS-specific hint
+          const text = await resp.text().catch(()=>null);
+          throw new Error(`${resp.status} ${resp.statusText} ${text?'- '+text:''}`);
+        }
+        const data = await resp.json();
+        if(!data || !data.data) throw new Error('Données de profil invalides reçues.');
+        setProfile(data.data);
+      }catch(err){
+        setError('Erreur: ' + (err.message || String(err)));
+      }finally{
+        setLoading(false);
+      }
+    }
+
+    return e('div', {className: 'container'},
+      e('h1', null, 'Valorant Player Stats (React)'),
+      e('form', {onSubmit: submit},
+        e('input', {
+          type: 'text',
+          value: tag,
+          onChange: (ev)=>setTag(ev.target.value),
+          placeholder: 'Nom#1234',
+          required: true,
+          style: {marginRight: '8px'}
+        }),
+        e('button', {type: 'submit', disabled: loading}, loading ? 'Chargement…' : 'Get Stats')
+      ),
+      error && e('div', {className:'error', style:{marginTop:'10px'}}, escapeHtml(error)),
+      profile && e(ProfileView, {data: profile})
+    );
+  }
+
+  // mount
+  const rootEl = document.getElementById('root');
+  if(!rootEl){
+    document.body.innerHTML = '<div style="color:red">Erreur: point de montage introuvable.</div>' + document.body.innerHTML;
+  } else {
+    ReactDOM.createRoot(rootEl).render(React.createElement(App));
+  }
+})();
 
