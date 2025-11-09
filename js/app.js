@@ -14,15 +14,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		setOutput('<div class="small">Chargement…</div>');
         const PLAYER_NAME = raw.split('#')[0];
+        const PLAYER_TAG = raw.split('#')[1];
         console.log(PLAYER_NAME);
+        console.log(PLAYER_TAG);
+         
         // Encode the full tag for the API URL
-        const encoded = encodeURIComponent(raw);
+        const encoded = encodeURIComponent( `${PLAYER_NAME}#${PLAYER_TAG}`);
         // Use a local proxy so the API key isn't exposed and CORS is handled server-side.
         // The proxy expects a `tag` query parameter with the full Riot tag like Name#1234.
     try{
       const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
       const headers = {
-        "TRN-Api-Key": API_KEY || '63a3ac9a-3730-4ed0-8fbb-f986e5176617'
+        "TRN-Api-Key": '63a3ac9a-3730-4ed0-8fbb-f986e5176617' // Replace with your actual API key
       };
 
       const response = await fetch(url, { headers });
