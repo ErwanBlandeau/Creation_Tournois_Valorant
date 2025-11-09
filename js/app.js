@@ -1,9 +1,11 @@
+import axios from 'axios';
+
 document.addEventListener('DOMContentLoaded', () => {
 	const form = document.getElementById('profile-form');
 	const input = document.getElementById('player-tag');
 	const out = document.getElementById('stats-output');
 
-	function setOutput(html){ out.innerHTML = html; }
+	function setOutput(html){ out.innerHTML = html;}
 
 	function showError(msg){ setOutput(`<div class="error">${escapeHtml(msg)}</div>`); }
 
