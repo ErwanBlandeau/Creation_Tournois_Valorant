@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try{
       const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
       const headers = {
-        "TRN-Api-Key": '63a3ac9a-3730-4ed0-8fbb-f986e5176617'
+        "TRN-Api-Key": '5b42ea3c-b339-45ad-808c-71f8e6422de9'
       };
 
       const response = await fetch(url, { headers });
