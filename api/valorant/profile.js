@@ -16,6 +16,8 @@ export default async function handler(req, res) {
     const encoded = encodeURIComponent(tag);
     const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
 
+    console.log('Proxying request for tag:', tag);
+    console.log('Request URL:', url);
     // Use the fetch available in the Vercel runtime (Node 18+ supports global fetch)
     const resp = await fetch(url, {
       headers: {
@@ -24,6 +26,8 @@ export default async function handler(req, res) {
       }
     });
 
+    console.log('Response status:', resp.status);
+    
     const text = await resp.text();
     let body = text;
     try{ body = JSON.parse(text); } catch(e){ /* not JSON, forward as text */ }
