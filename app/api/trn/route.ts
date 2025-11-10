@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     const url = `https://public-api.tracker.gg/api/v1/${titleSlug}/standard/profile/${platformSlug}/${encodedIdentifier}`;
 
-    const apiKey = process.env.TRN_API_KEY || "";
+    const apiKey = "5b42ea3c-b339-45ad-808c-71f8e6422de9"
     if (!apiKey) {
       return NextResponse.json({ error: "Server missing TRN_API_KEY environment variable" }, { status: 500 });
     }
