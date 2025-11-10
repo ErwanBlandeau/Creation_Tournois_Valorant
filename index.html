@@ -1,19 +1,49 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Valorant Player Stats</title>
-  <link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8" />
+  <title>Valorant Stats Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #0f1923;
+      color: #fff;
+    }
+    input, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin: 0.25rem;
+      border-radius: 8px;
+      border: none;
+    }
+    input {
+      width: 250px;
+    }
+    button {
+      background-color: #ff4655;
+      color: white;
+      cursor: pointer;
+    }
+    pre {
+      margin-top: 1rem;
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <h1>Valorant Player Stats</h1>
+  <p>Exemple de tag : <code>loulou28#12345</code></p>
 
-  <!-- React (UMD) - works without a bundler so the site stays static -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Axios (CDN) - used by the non-React form handler to call the server proxy -->
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-  <script src="js/app.js"></script>
+  <input id="riotTag" placeholder="Entrez votre Riot ID" />
+  <button id="getStatsBtn">Get Stats</button>
+
+  <pre id="output">Résultats ici...</pre>
+
+  <script src="public/app.js"></script>
 </body>
 </html>

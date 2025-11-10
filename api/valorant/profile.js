@@ -1,37 +1,40 @@
-// Vercel Serverless Function: /api/valorant/profile?tag=Name%231234
-// This proxies the request to tracker.gg and adds the TRN API key server-side.
+import axios from "axios";
+
+// Vercel serverless function: GET /api/valorant/profile?tag=<riotTag>
+// Reads TRN API key from process.env.TRN_API_KEY (set this in Vercel dashboard).
 
 export default async function handler(req, res) {
-  const tag = req.query.tag || (req.url && new URL(req.url, 'http://localhost').searchParams.get('tag'));
-  if(!tag){
-    return res.status(400).json({ error: 'missing tag query parameter' });
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    return res.status(204).end();
   }
 
-  const API_KEY = process.env.TRN_API_KEY;
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET, OPTIONS");
+    return res.status(405).json({ message: "Method not allowed" });
+  }
 
-  try{
-    const encoded = encodeURIComponent(tag);
-    const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
+  const { tag } = req.query;
+  if (!tag) return res.status(400).json({ message: "Missing 'tag' query parameter" });
 
-    console.log('Proxying request for tag:', tag);
-    console.log('Request URL:', url);
-    // Use the fetch available in the Vercel runtime (Node 18+ supports global fetch)
-    const resp = await fetch(url, {
-      headers: {
-        'TRN-Api-Key': "5b42ea3c-b339-45ad-808c-71f8e6422de9",
-        'Accept': 'application/json'
-      }
-    });
+  const apiKey = process.env.TRN_API_KEY;
+  if (!apiKey) return res.status(500).json({ message: "Missing TRN_API_KEY environment variable" });
 
-    console.log('Response status:', resp.status);
-    
-    const text = await resp.text();
-    let body = text;
-    try{ body = JSON.parse(text); } catch(e){ /* not JSON, forward as text */ }
+  try {
+    const response = await axios.get(
+      `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${tag}`,
+      { headers: { "TRN-Api-Key": apiKey } }
+    );
 
-    res.status(resp.status).json(body);
-  }catch(err){
-    console.error('Proxy error', err);
-    res.status(500).json({ error: 'proxy_error', message: err.message });
+    // Allow cross-origin access from the static site
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    return res.status(200).json(response.data);
+  } catch (err) {
+    console.error("Tracker API error:", err.response?.data || err.message);
+    const status = err.response?.status || 500;
+    return res.status(status).json(err.response?.data || { message: "Unknown error" });
   }
 }
