@@ -8,9 +8,6 @@ export default async function handler(req, res) {
   }
 
   const API_KEY = process.env.TRN_API_KEY;
-  if(!API_KEY){
-    return res.status(500).json({ error: 'missing_api_key', message: 'TRN_API_KEY not set in environment' });
-  }
 
   try{
     const encoded = encodeURIComponent(tag);
