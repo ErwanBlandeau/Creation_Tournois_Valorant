@@ -29,6 +29,10 @@ export async function POST(req: Request) {
       timeout: 10_000,
     });
 
+    console.log("Request headers:", resp.config.headers);
+    console.log("Received response:", resp.data);
+
+
     // Return the raw tracker.gg response payload
     return NextResponse.json(resp.data);
   } catch (err: any) {
