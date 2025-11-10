@@ -23,27 +23,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Use a local proxy so the API key isn't exposed and CORS is handled server-side.
         // The proxy expects a `tag` query parameter with the full Riot tag like Name#1234.
     try{
-      const url = `https://public-api.tracker.gg/api/v1/valorant/standard/profile/riot/${encoded}`;
-      const headers = {
-        "TRN-Api-Key": '5b42ea3c-b339-45ad-808c-71f8e6422de9'
-      };
+      // Use the server-side proxy so the TRN API key stays on the server
+      // The proxy is implemented in `api/valorant/profile.js` and expects a `tag` query param.
+      const url = `/api/valorant/profile?tag=${encoded}`;
 
-      const response = await fetch(url, { headers });
+      // Use axios like in your example
+      const response = await axios.get(url);
 
-      if(!response.ok){
-        showError(`Erreur lors de la récupération des données: ${response.status} ${response.statusText}`);
-        return;
-      }
-
-      const data = await response.json();
-      if(!data || !data.data){
+      // axios resolves only for 2xx responses; response.data should contain the proxied body
+      if(!response || !response.data){
         showError('Données de profil invalides reçues.');
         return;
       }
-      populateProfile(data.data);
-      console.log(data.data);
+
+      // Match your example: populateProfile(response.data.data)
+      populateProfile(response.data.data);
+      console.log(response.data.data);
     }catch(err){
-      showError('Erreur: ' + (err.message || String(err)));
+      // Try to provide useful error info from axios
+      const msg = err?.response?.data?.message || err?.response?.statusText || err?.message || String(err);
+      showError('Erreur: ' + msg);
     }
 	});
 

@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     // Use the fetch available in the Vercel runtime (Node 18+ supports global fetch)
     const resp = await fetch(url, {
       headers: {
-        'TRN-Api-Key': API_KEY,
+        'TRN-Api-Key': "5b42ea3c-b339-45ad-808c-71f8e6422de9",
         'Accept': 'application/json'
       }
     });
