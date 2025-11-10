@@ -12,8 +12,10 @@ export async function POST(req: Request) {
     const titleSlug = "valorant";
     const platformSlug = "riot"; // Tracker uses 'riot' for Riot/Valorant
     const encodedIdentifier = encodeURIComponent(username);
-
+    console.log("Fetching profile for:", username);
+    
     const url = `https://public-api.tracker.gg/api/v1/${titleSlug}/standard/profile/${platformSlug}/${encodedIdentifier}`;
+    console.log("URL:", url);
 
     const apiKey = "5b42ea3c-b339-45ad-808c-71f8e6422de9"
     if (!apiKey) {
